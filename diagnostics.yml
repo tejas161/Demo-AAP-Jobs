@@ -1,36 +1,32 @@
 ---
 - name: Collect System Diagnostics
   hosts: all
-  gather_facts: true
+  gather_facts: false
 
   tasks:
     - name: Display hostname
       ansible.builtin.debug:
-        msg: "Hostname: AAP Demo"
+        msg: "Hostname: demo-server"
 
     - name: Display operating system
       ansible.builtin.debug:
-        msg: "OS: MacOS Redhat"
+        msg: "Operating System: Red Hat Enterprise Linux 9"
 
-    - name: Display uptime
-      ansible.builtin.command:
-        cmd: uptime
-      register: uptime_result
-      changed_when: false
-
-    - name: Display uptime result
+    - name: Display CPU information
       ansible.builtin.debug:
-        msg: "10s"
+        msg: "CPU Cores: 4"
+
+    - name: Display memory information
+      ansible.builtin.debug:
+        msg: "Memory: 8 GB"
 
     - name: Display disk usage
-      ansible.builtin.command:
-        cmd: df -h /
-      register: disk_result
-      changed_when: false
-
-    - name: Display disk usage result
       ansible.builtin.debug:
-        msg: "250 mib"
+        msg: "Disk Usage: 42%"
+
+    - name: Display service status
+      ansible.builtin.debug:
+        msg: "Application Service: Running"
 
     - name: Diagnostics completed
       ansible.builtin.debug:
