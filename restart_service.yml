@@ -1,0 +1,21 @@
+---
+- name: Restart Application Service
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Stop application service
+      ansible.builtin.debug:
+        msg: "Stopping application service..."
+
+    - name: Simulate restart
+      ansible.builtin.pause:
+        seconds: 2
+
+    - name: Start application service
+      ansible.builtin.debug:
+        msg: "Starting application service..."
+
+    - name: Report restart status
+      ansible.builtin.debug:
+        msg: "Application service restarted successfully"

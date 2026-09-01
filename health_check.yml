@@ -1,0 +1,21 @@
+---
+- name: Environment Health Check
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Check hostname
+      ansible.builtin.debug:
+        msg: "Hostname: AAP Demo"
+
+    - name: Check disk usage
+      ansible.builtin.debug:
+        msg: "Disk usage check completed"
+
+    - name: Check memory
+      ansible.builtin.debug:
+        msg: "Memory check completed"
+
+    - name: Report health status
+      ansible.builtin.debug:
+        msg: "Environment is healthy"

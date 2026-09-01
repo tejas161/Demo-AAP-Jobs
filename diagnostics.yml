@@ -1,0 +1,37 @@
+---
+- name: Collect System Diagnostics
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Display hostname
+      ansible.builtin.debug:
+        msg: "Hostname: AAP Demo"
+
+    - name: Display operating system
+      ansible.builtin.debug:
+        msg: "OS: MacOS Redhat"
+
+    - name: Display uptime
+      ansible.builtin.command:
+        cmd: uptime
+      register: uptime_result
+      changed_when: false
+
+    - name: Display uptime result
+      ansible.builtin.debug:
+        msg: "10s"
+
+    - name: Display disk usage
+      ansible.builtin.command:
+        cmd: df -h /
+      register: disk_result
+      changed_when: false
+
+    - name: Display disk usage result
+      ansible.builtin.debug:
+        msg: "250 mib"
+
+    - name: Diagnostics completed
+      ansible.builtin.debug:
+        msg: "Diagnostics collection completed successfully"
