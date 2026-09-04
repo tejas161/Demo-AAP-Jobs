@@ -1,0 +1,16 @@
+---
+- name: Check OpenShift CLI
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: Check if oc is available
+      ansible.builtin.command:
+        cmd: oc version --client
+      register: oc_version
+      changed_when: false
+
+    - name: Display oc version
+      ansible.builtin.debug:
+        var: oc_version.stdout
