@@ -1,5 +1,5 @@
 ---
-- name: Start SentinelOps OpenShift build
+- name: Inspect SentinelOps BuildConfig
   hosts: localhost
   gather_facts: false
 
@@ -15,46 +15,25 @@
           - openshift_namespace | length > 0
         fail_msg: "OPENSHIFT_NAMESPACE must be provided."
 
-    - name: Start SentinelOps build
-      ansible.builtin.command:
-        cmd: "oc start-build {{ build_config_name }} -n {{ openshift_namespace }}"
-      register: build_start
-      changed_when: true
+    - name: Get SentinelOps BuildConfig
+      kubernetes.core.k8s_info:
+        api_version: build.openshift.io/v1
+        kind: BuildConfig
+        name: "{{ build_config_name }}"
+        namespace: "{{ openshift_namespace }}"
+      register: buildconfig
 
-    - name: Display build start result
-      ansible.builtin.debug:
-        var: build_start.stdout
+    - name: Verify BuildConfig exists
+      ansible.builtin.assert:
+        that:
+          - buildconfig.resources | length == 1
+        fail_msg: "BuildConfig '{{ build_config_name }}' was not found."
 
-    - name: Extract build name
-      ansible.builtin.set_fact:
-        build_name: "{{ build_start.stdout | regex_search('sentinelops-[0-9]+') }}"
-
-    - name: Display build name
-      ansible.builtin.debug:
-        msg: "Started build: {{ build_name }}"
-
-    - name: Wait for build to complete
-      ansible.builtin.command:
-        cmd: >-
-          oc get build {{ build_name }}
-          -n {{ openshift_namespace }}
-          -o jsonpath={.status.phase}
-      register: build_status
-      changed_when: false
-      until: build_status.stdout in ["Complete", "Failed", "Error", "Cancelled"]
-      retries: 60
-      delay: 10
-
-    - name: Fail if build failed
-      ansible.builtin.fail:
-        msg: >-
-          OpenShift build {{ build_name }} failed with status:
-          {{ build_status.stdout }}
-      when: build_status.stdout != "Complete"
-
-    - name: Display successful build
+    - name: Display BuildConfig details
       ansible.builtin.debug:
         msg:
-          - "OpenShift build completed successfully!"
-          - "Build: {{ build_name }}"
-          - "Status: {{ build_status.stdout }}"
+          - "BuildConfig: {{ buildconfig.resources[0].metadata.name }}"
+          - "Latest build: {{ buildconfig.resources[0].status.lastVersion }}"
+          - "Source: {{ buildconfig.resources[0].spec.source.git.uri }}"
+          - "Strategy: {{ buildconfig.resources[0].spec.strategy.type }}"
+          - "Output image: {{ buildconfig.resources[0].spec.output.to.name }}"
