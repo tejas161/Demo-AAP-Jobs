@@ -4,7 +4,7 @@
   gather_facts: false
 
   vars:
-    openshift_namespace: "{{ lookup('env', 'OPENSHIFT_NAMESPACE') }}"
+    openshift_namespace: "{{ OPENSHIFT_NAMESPACE }}"
     build_config_name: "sentinelops"
 
   tasks:
