@@ -3,17 +3,47 @@
   hosts: localhost
   gather_facts: false
 
+  vars:
+    openshift_namespace: "{{ lookup('env', 'OPENSHIFT_NAMESPACE') }}"
+    openshift_resource_name: "{{ lookup('env', 'OPENSHIFT_RESOURCE_NAME') }}"
+
   tasks:
 
-    - name: Get OpenShift cluster information
+    - name: Validate required variables
+      ansible.builtin.assert:
+        that:
+          - openshift_namespace | length > 0
+          - openshift_resource_name | length > 0
+        fail_msg: >-
+          OPENSHIFT_NAMESPACE and OPENSHIFT_RESOURCE_NAME
+          must be provided.
+
+    - name: Get OpenShift namespace
       kubernetes.core.k8s_info:
         api_version: v1
         kind: Namespace
-        name: rhn-support-tgavanka-dev
-      register: openshift_namespace
+        name: "{{ openshift_namespace }}"
+      register: openshift_namespace_info
+
+    - name: Verify namespace exists
+      ansible.builtin.assert:
+        that:
+          - openshift_namespace_info.resources | length == 1
+        fail_msg: >-
+          Namespace '{{ openshift_namespace }}' was not found.
+
+    - name: Get OpenShift resource
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        name: "{{ openshift_resource_name }}"
+        namespace: "{{ openshift_namespace }}"
+      register: openshift_resource
 
     - name: Display connection result
       ansible.builtin.debug:
-        msg: >-
-          Successfully connected to OpenShift!
-          Namespace found: {{ openshift_namespace.resources[0].metadata.name }}
+        msg:
+          - "Successfully connected to OpenShift!"
+          - "Namespace: {{ openshift_namespace }}"
+          - "Resource: {{ openshift_resource_name }}"
+          - "Resource found: {{ openshift_resource.resources | length == 1 }}"
