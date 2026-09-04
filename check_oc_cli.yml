@@ -1,16 +1,67 @@
 ---
-- name: Check OpenShift CLI
+
+* name: Start SentinelOps OpenShift build
   hosts: localhost
   gather_facts: false
 
+  vars:
+  openshift_namespace: "{{ lookup('env', 'OPENSHIFT_NAMESPACE') }}"
+  build_config_name: "sentinelops"
+
   tasks:
 
-    - name: Check if oc is available
-      ansible.builtin.command:
-        cmd: oc version --client
-      register: oc_version
-      changed_when: false
+  * name: Validate required variables
+    ansible.builtin.assert:
+    that:
+    - openshift_namespace | length > 0
+    fail_msg: "OPENSHIFT_NAMESPACE must be provided."
 
-    - name: Display oc version
-      ansible.builtin.debug:
-        var: oc_version.stdout
+  * name: Start SentinelOps build
+    ansible.builtin.command:
+    cmd: >-
+    oc start-build {{ build_config_name }}
+    -n {{ openshift_namespace }}
+    register: build_start
+    changed_when: true
+
+  * name: Display build start result
+    ansible.builtin.debug:
+    msg: "{{ build_start.stdout }}"
+
+  * name: Extract build name
+    ansible.builtin.set_fact:
+    build_name: "{{ build_start.stdout | regex_search('(?<=build.build.openshift.io/)[^ ]+') }}"
+
+  * name: Display build name
+    ansible.builtin.debug:
+    msg: "Started build: {{ build_name }}"
+
+  * name: Wait for build to complete
+    ansible.builtin.command:
+    cmd: >-
+    oc get build {{ build_name }}
+    -n {{ openshift_namespace }}
+    -o jsonpath={.status.phase}
+    register: build_status
+    changed_when: false
+    until:
+
+    * build_status.stdout in ["Complete", "Failed", "Error", "Cancelled"]
+      retries: 60
+      delay: 10
+
+  * name: Fail if build failed
+    ansible.builtin.fail:
+    msg: >-
+    OpenShift build {{ build_name }} failed.
+    Status: {{ build_status.stdout }}
+    when: build_status.stdout != "Complete"
+
+  * name: Display successful build
+    ansible.builtin.debug:
+    msg:
+    - "=========================================="
+    - "OpenShift build completed successfully!"
+    - "Build: {{ build_name }}"
+    - "Status: {{ build_status.stdout }}"
+    - "=========================================="
