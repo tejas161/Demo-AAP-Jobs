@@ -1,0 +1,22 @@
+---
+- name: Check SentinelOps Knative Service
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: Get SentinelOps service
+      kubernetes.core.k8s_info:
+        api_version: serving.knative.dev/v1
+        kind: Service
+        name: sentinelops
+        namespace: "{{ openshift_namespace }}"
+      register: sentinelops_service
+
+    - name: Display service status
+      ansible.builtin.debug:
+        msg:
+          - "Service: {{ sentinelops_service.resources[0].metadata.name }}"
+          - "URL: {{ sentinelops_service.resources[0].status.url | default('Not available') }}"
+          - "Latest ready revision: {{ sentinelops_service.resources[0].status.latestReadyRevisionName | default('Not available') }}"
+          - "Latest created revision: {{ sentinelops_service.resources[0].status.latestCreatedRevisionName | default('Not available') }}"
