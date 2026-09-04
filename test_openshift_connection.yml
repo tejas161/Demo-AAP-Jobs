@@ -1,0 +1,19 @@
+---
+- name: Test OpenShift connection
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: Get OpenShift cluster information
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Namespace
+        name: rhn-support-tgavanka-dev
+      register: openshift_namespace
+
+    - name: Display connection result
+      ansible.builtin.debug:
+        msg: >-
+          Successfully connected to OpenShift!
+          Namespace found: {{ openshift_namespace.resources[0].metadata.name }}
