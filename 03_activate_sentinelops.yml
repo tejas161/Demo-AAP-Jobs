@@ -1,0 +1,33 @@
+---
+- name: Activate SentinelOps
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: Get SentinelOps Knative Service
+      kubernetes.core.k8s_info:
+        api_version: serving.knative.dev/v1
+        kind: Service
+        name: sentinelops
+        namespace: "{{ openshift_namespace }}"
+      register: sentinelops_service
+
+    - name: Get SentinelOps URL
+      ansible.builtin.set_fact:
+        sentinelops_url: "{{ sentinelops_service.resources[0].status.url }}"
+
+    - name: Call SentinelOps
+      ansible.builtin.uri:
+        url: "{{ sentinelops_url }}"
+        method: GET
+        status_code: 200
+        return_content: true
+      register: sentinelops_response
+
+    - name: Display SentinelOps response
+      ansible.builtin.debug:
+        msg:
+          - "SentinelOps URL: {{ sentinelops_url }}"
+          - "HTTP status: {{ sentinelops_response.status }}"
+          - "Response: {{ sentinelops_response.content }}"
