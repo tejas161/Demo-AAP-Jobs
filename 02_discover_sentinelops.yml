@@ -1,0 +1,28 @@
+---
+- name: Discover SentinelOps
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+
+    - name: Find SentinelOps pods
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: "{{ openshift_namespace }}"
+        label_selectors:
+          - "serving.knative.dev/service=sentinelops"
+      register: sentinelops_pods
+
+    - name: Display SentinelOps pods
+      ansible.builtin.debug:
+        msg: >-
+          Found {{ sentinelops_pods.resources | length }}
+          SentinelOps pod(s).
+
+    - name: Display pod details
+      ansible.builtin.debug:
+        msg:
+          - "Pod: {{ item.metadata.name }}"
+          - "Status: {{ item.status.phase }}"
+      loop: "{{ sentinelops_pods.resources }}"
