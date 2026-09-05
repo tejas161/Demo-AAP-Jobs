@@ -1,29 +1,24 @@
 ---
-- name: Inspect SentinelOps BuildConfig
+- name: Test SentinelOps BuildConfig access
   hosts: localhost
   gather_facts: false
 
   vars:
     openshift_namespace: "{{ OPENSHIFT_NAMESPACE }}"
-    build_config_name: "sentinelops"
 
   tasks:
 
-    - name: Validate required variables
-      ansible.builtin.assert:
-        that:
-          - openshift_namespace | length > 0
-        fail_msg: "OPENSHIFT_NAMESPACE must be provided."
-
-    - name: Get SentinelOps BuildConfig
+    - name: Get all BuildConfigs
       kubernetes.core.k8s_info:
         api_version: build.openshift.io/v1
         kind: BuildConfig
-        name: "{{ build_config_name }}"
         namespace: "{{ openshift_namespace }}"
-      register: buildconfig
+      register: buildconfigs
       failed_when: false
 
-    - name: Display BuildConfig API result
+    - name: Display BuildConfig result
       ansible.builtin.debug:
-        var: buildconfig
+        msg:
+          - "Failed: {{ buildconfigs.failed | default(false) }}"
+          - "BuildConfig count: {{ buildconfigs.resources | default([]) | length }}"
+          - "Message: {{ buildconfigs.msg | default('No error') }}"
