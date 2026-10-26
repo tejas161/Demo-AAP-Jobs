@@ -1,0 +1,20 @@
+---
+# Job template: PR Compliance - Comment Non-Compliant
+# Extra vars from AO: repo_full_name (owner/repo), pr_number
+# GitHub token: set on job template via credential injectors (see SETUP-pr-comments.md)
+- name: Post non-compliant PR comment on GitHub
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Post comment
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/{{ repo_full_name }}/issues/{{ pr_number }}/comments"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ github_token }}"
+          Accept: application/vnd.github+json
+        body_format: json
+        body:
+          body: "❌ **PR compliance:** Title must include a Jira key like `AAP-12345`."
+        status_code: [201]
+      no_log: true
