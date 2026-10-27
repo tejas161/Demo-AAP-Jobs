@@ -1,0 +1,44 @@
+
+---
+# Job template: PR Compliance - Slack Failure Notification
+# Extra vars from AO: repo_full_name, pr_number
+# Optional: slack_webhook_url
+
+- name: Demo PR compliance failure notification
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Prepare notification
+      ansible.builtin.set_fact:
+        slack_message: |
+          🚨 PR Compliance Automation Failed
+
+          Repository: {{ repo_full_name }}
+          Pull Request: https://github.com/{{ repo_full_name }}/pull/{{ pr_number }}
+
+          The automation failed while processing this PR.
+
+    - name: Send Slack notification when configured
+      ansible.builtin.uri:
+        url: "{{ slack_webhook_url }}"
+        method: POST
+        body_format: json
+        body:
+          text: "{{ slack_message }}"
+        status_code: [200]
+      when:
+        - slack_webhook_url is defined
+        - slack_webhook_url | length > 0
+      no_log: true
+
+    - name: Demo notification when Slack is not configured
+      ansible.builtin.debug:
+        msg: "{{ slack_message }}"
+      when: >-
+        slack_webhook_url is not defined or
+        slack_webhook_url | length == 0
+
+    - name: Show completion status
+      ansible.builtin.debug:
+        msg: "Notification job completed successfully."
